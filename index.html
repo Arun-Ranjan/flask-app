@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Run Executable</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .output {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e7f1f7;
+            border: 1px solid #007bff;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .error {
+            color: red;
+        }
+        .input-wrapper {
+            display: none; /* Hide input fields initially */
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Run Executable from Flask API</h1>
+
+    <!-- Dropdown for selecting executable arguments -->
+    <label for="argDropdown">Choose Argument:</label>
+    <select id="argDropdown">
+        <option value="">Select an argument</option>
+        <option value="create">create</option>
+        <option value="query">query</option>
+    </select>
+
+    <br><br>
+
+    <!-- Input fields for additional user input -->
+    <div id="createQueries" class="input-wrapper">
+        <label for="createQuery">Enter the Create Query:</label>
+        <input type="text" id="createQuery" placeholder="Enter Create Query">
+
+        <br><br>
+
+        <label for="insertQuery">Enter the Insert Query:</label>
+        <input type="text" id="insertQuery" placeholder="Enter Insert Query">
+    </div>
+
+    <div id="queryWrapper" class="input-wrapper">
+        <label for="userInput">Enter the SQL Query:</label>
+        <input type="text" id="userInput" placeholder="Enter the query">
+    </div>
+
+    <br><br>
+
+    <!-- Button to trigger the executable -->
+    <button id="runButton" disabled>Run Executable</button>
+
+    <!-- Div to display output or error -->
+    <div id="output" class="output"></div>
+
+    <script>
+        // Handle dropdown selection change to toggle input fields
+        document.getElementById('argDropdown').addEventListener('change', function() {
+            const selectedArg = this.value;
+
+            // Hide all input fields initially
+            document.getElementById('createQueries').style.display = 'none';
+            document.getElementById('queryWrapper').style.display = 'none';
+            document.getElementById('runButton').disabled = true;
+
+            // Show the appropriate input fields based on the selected argument
+            if (selectedArg === 'create') {
+                document.getElementById('createQueries').style.display = 'block'; // Show create input fields
+                document.getElementById('runButton').disabled = false;
+            } else if (selectedArg === 'query') {
+                document.getElementById('queryWrapper').style.display = 'block'; // Show query input field
+                document.getElementById('runButton').disabled = false;
+            }
+        });
+
+        // Handle the "Run Executable" button click
+        document.getElementById('runButton').addEventListener('click', function() {
+            const selectedArg = document.getElementById('argDropdown').value;
+            let userInputs = {};
+
+            // Get the user inputs based on the selected argument
+            if (selectedArg === 'create') {
+                const createQuery = document.getElementById('createQuery').value;
+                const insertQuery = document.getElementById('insertQuery').value;
+                
+                // Validate user inputs for 'create' argument
+                if (!createQuery || !insertQuery) {
+                    document.getElementById('output').innerHTML = '<span class="error">Both Create and Insert queries are required.</span>';
+                    return;
+                }
+
+                userInputs.createQuery = createQuery;
+                userInputs.insertQuery = insertQuery;
+            } else if (selectedArg === 'query') {
+                const query = document.getElementById('userInput').value;
+
+                
+                // Validate user input for 'query' argument
+                if (!query) {
+                    document.getElementById('output').innerHTML = '<span class="error">Query input is required.</span>';
+                    return;
+                }
+
+                userInputs.query = query;
+
+            }
+            console.log(userInputs)
+            // Clear the output before making the request
+            document.getElementById('output').innerText = 'Running...';
+
+            // Send a POST request to the Flask API
+            fetch('http://127.0.0.1:5000/run-executable', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    arg: selectedArg,  // Send selected argument
+                    ...userInputs      // Send corresponding user inputs
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Display the output
+                if (data.output) {
+                    document.getElementById('output').innerText = `Output:\n${data.output}`;
+                } else if (data.error) {
+                    document.getElementById('output').innerHTML = `<span class="error">Error: ${data.error}</span>`;
+                }
+            })
+            .catch(error => {
+                // Display error if the fetch fails
+                document.getElementById('output').innerHTML = `<span class="error">Failed to connect to the server: ${error}</span>`;
+            });
+        });
+    </script>
+
+</body>
+</html>

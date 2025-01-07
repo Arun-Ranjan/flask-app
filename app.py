@@ -11,17 +11,21 @@ EXECUTABLE_PATH = 'E://Training//rust//snoflake_connector_rs//connector//target/
 
 @app.route('/run-executable', methods=['POST'])
 def run_executable():
+    if not os.path.exists(EXECUTABLE_PATH):
+        return jsonify({'error': f'Executable not found at {EXECUTABLE_PATH}'}),
     # Get the data from the frontend request
     data = request.get_json()
     arg = data.get('arg')
+    usrername = data.get('username')
+    password = data.get('password')
     output = ""
     error = ""
 
-    if arg not in ['create', 'query']:
-        return jsonify({'error': 'Invalid argument selected. Must be "create" or "query".'}), 400
+    # if arg not in ['create', 'query']:
+    #     return jsonify({'error': 'Invalid argument selected. Must be "create" or "query".'}), 400
 
     # Initialize command based on the argument
-    command = [EXECUTABLE_PATH, arg]
+    command = [EXECUTABLE_PATH, usrername, password, arg]
 
     try:
         # Start the executable with the command-line argument

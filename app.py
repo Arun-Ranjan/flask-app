@@ -15,9 +15,9 @@ def run_executable():
         return jsonify({'error': f'Executable not found at {EXECUTABLE_PATH}'}),
     # Get the data from the frontend request
     data = request.get_json()
-    arg = data.get('arg')
     usrername = data.get('username')
     password = data.get('password')
+    arg = data.get('arg')
     output = ""
     error = ""
 
